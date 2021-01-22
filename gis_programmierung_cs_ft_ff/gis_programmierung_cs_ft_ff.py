@@ -21,15 +21,23 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QFileDialog
+from qgis.core import QgsProject, Qgis
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .gis_programmierung_cs_ft_ff_dialog import GisProgrammierungCSFTFFDialog
 import os.path
+
+# Import vispy and numpy
+import vispy
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Import classes
 
 
 class GisProgrammierungCSFTFF:
@@ -179,15 +187,123 @@ class GisProgrammierungCSFTFF:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def close_function(self):
+        """Closing function"""
+        self.dlg.close()
+
+    def import_points_convexHull(self):
+        """Convex Hull Import function"""
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select file","", '*.csv, *.txt')
+        self.dlg.ConvexHullImportPath.setText(filename) 
+
+    def import_data_convexHull(self):
+        """Import Data Convex Hull"""
+        filenameInConvHull = self.dlg.ConvexHullImportPath.text()
+        with open(filenameInConvHull, 'r') as file:
+            np.genfromtxt(file, dtype=None)
+    
+    def export_points_convexHull(self):
+        """Convex Hull Export function"""
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","", '*.csv, *.txt')
+        self.dlg.ConvexHullExportPath.setText(filename) 
+
+    def export_convexHull(self):
+        """Export Convex Hull"""
+        filenameInConvHull = self.dlg.ConvexHullImportPath.text()
+        filenameOutConvHull = self.dlg.ConvexHullExportPath.text()
+        output_file_convHull = open(filenameOutConvHull, 'w')
+
+        with open(filenameInConvHull, 'r') as file:
+            pointsConvexHull = np.genfromtxt(file, dtype=None)
+            np.savetxt(output_file_convHull, pointsConvexHull, delimiter=' ', fmt='%f')
+        output_file_convHull.close()
+
+    def execute_convexHull(self):
+        """Main Function"""
+        filenameInConvHull = self.dlg.ConvexHullImportPath.text() # Filename Input
+        filenameOutConvHull = self.dlg.ConvexHullExportPath.text() # Filename Output
+        output_file_convHull = open(filenameOutConvHull, 'w')
+        # Read file
+        with open(filenameInConvHull, 'r') as file:
+            S = np.genfromtxt(file, dtype=None)
+
+        n = len(S)
+        P = [None] * n
+        l = np.where(S[:,0] == np.min(S[:,0]))
+        pointOnHull = S[l[0][0]]
+
+        def CCW(p1, p2, p3):
+            """Function to know if we have a CCW turn (counter-clockwise)"""
+            if (p3[1]-p1[1])*(p2[0]-p1[0]) >= (p2[1]-p1[1])*(p3[0]-p1[0]):
+                return True
+            return False
+
+        i = 0
+        while True:
+            P[i] = pointOnHull
+            endpoint = S[0]
+            for j in range(1,n):
+                if (endpoint[0] == pointOnHull[0] and endpoint[1] == pointOnHull[1]) or not CCW(S[j],P[i],endpoint):
+                    endpoint = S[j]
+            i = i + 1
+            pointOnHull = endpoint
+            if endpoint[0] == P[0][0] and endpoint[1] == P[0][1]:
+                break
+
+        for i in range(n):
+            if P[-1] is None:
+                del P[-1]
+        P = np.array(P)
+        np.savetxt(output_file_convHull, np.array(P), delimiter=' ', fmt='%f') #save File
+        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutConvHull, level=Qgis.Success, duration=3)
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)  # vgl. https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplot.html (10.12.2018)
+        # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.set_ylim.html
+        plt.ylim(-10, 15)
+        plt.xlim(-10, 15)
+        # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html  
+        plt.plot(P[:,0],P[:,1], 'b-')  # b = blau
+        plt.plot([P[-1,0],P[0,0]],[P[-1,1],P[0,1]], 'b-')
+        # Punkte in Hülle: rot
+        plt.plot(S[:,0],S[:,1],"r^")
+        # Punkte auf Hülle: grün + square marker
+        plt.plot(P[:,0],P[:,1],"gs", markersize=7)
+        # Koordinaten anzeigen
+        for xy in zip(P[:,0],P[:,1]):                                                           
+            ax.annotate('%s, %s' %xy, xy=xy, textcoords='data', ha='center', va='bottom', fontstyle='normal')     
+        plt.axis('on')
+        plt.title('Berechnung einer konvexen Hülle')
+        plt.show()
+        
+    def import_points_PIP(self):
+        """Point in Polygon Import function"""
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select file","", '*.csv, *.txt')
+        self.dlg.ConvexHullImportPath.setText(filename) 
 
     def run(self):
         """Run method that performs all the real work"""
-
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.first_start = False
             self.dlg = GisProgrammierungCSFTFFDialog()
+            self.dlg.ConvexHullImport.clicked.connect(self.import_points_convexHull) # Convex Hull Import Button
+            self.dlg.ConvexHullExport.clicked.connect(self.export_points_convexHull) # Convex Hull Import Button
+            self.dlg.ImportDataConvexHull.clicked.connect(self.import_data_convexHull) # Import file
+            self.dlg.ExportDataConvexHull.clicked.connect(self.export_convexHull) # Export file
+            self.dlg.generateConvexHull.clicked.connect(self.execute_convexHull) # Triggers Convex Hull algorithm
+
+            self.dlg.PointsImportPIP.clicked.connect(self.import_points_PIP) # Point in Polygon Import Button
+
+            self.dlg.closeConvexHull.clicked.connect(self.close_function) # close UI
+            self.dlg.closePIP.clicked.connect(self.close_function) # close UI
+            self.dlg.closeEarClipping.clicked.connect(self.close_function) # close UI
+            self.dlg.closeLaserData.clicked.connect(self.close_function) # close UI
+            self.dlg.closeDTM.clicked.connect(self.close_function) # close UI
 
         # show the dialog
         self.dlg.show()
@@ -195,6 +311,6 @@ class GisProgrammierungCSFTFF:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
+            
             pass
+
