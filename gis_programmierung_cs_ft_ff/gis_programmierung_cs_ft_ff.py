@@ -183,14 +183,12 @@ class GisProgrammierungCSFTFF:
     # ------------- Convex Hull ------------- #
     def import_points_convexHull(self):
         """Convex Hull Import function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.shp *.txt *.csv *.ply')
         self.dlg.ConvexHullImportPath.setText(filename) 
     
     def export_points_convexHull(self):
         """Convex Hull Export function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
         self.dlg.ConvexHullExportPath.setText(filename)
 
     def execute_convexHull(self):
@@ -264,20 +262,17 @@ class GisProgrammierungCSFTFF:
     # ------------- Point in Polygon ------------- #
     def import_polygon_PIP(self):
         """Point in Polygon Import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PolygonPIPImportPath.setText(filename)
         
     def import_points_PIP(self):
         """Point in Polygon Import Point-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PointPIPImportPath.setText(filename)
 
     def export_PIP(self):
         """Point in Poly Export function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PIPExportPath.setText(filename)
     
     def execute_pip(self):
@@ -351,14 +346,12 @@ class GisProgrammierungCSFTFF:
     # ------------- Ear-Clipping-Algorithm  ------------- #
     def import_poly_ear(self):
         """Ear-Clipping-Algorithm import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PolygonECAImportPath.setText(filename)
 
     def export_ear(self):
         """Ear-Clipping-Algorithm export Polygon-function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*.ply *.txt')
         self.dlg.EarClippingExportPath.setText(filename)
 
     def execute_ear(self):
@@ -1080,10 +1073,16 @@ class GisProgrammierungCSFTFF:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        plt.ylim(-5, 15)
-        plt.xlim(-5, 15)
+        minAxis = np.amin(pipPoly)
+        maxAxis = np.amax(pipPoly)
+        if minAxis <= 0:
+            plt.ylim(minAxis - 2, maxAxis + 2)
+            plt.xlim(minAxis - 2, maxAxis + 2)
+        else:
+            plt.ylim(minAxis + 2, maxAxis + 2)
+            plt.xlim(minAxis + 2, maxAxis + 2)
 
-        plt.plot(ECAI)
+        plt.plot(Ear Clip Algorithm)
         plt.axis('on')
         plt.title('Ear-Clip-Algorithm')
         plt.show()
