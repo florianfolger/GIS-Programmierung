@@ -38,7 +38,7 @@
      </rect>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="tab_6">
      <attribute name="title">
@@ -54,7 +54,7 @@
        </rect>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tab_7">
        <attribute name="title">
@@ -174,32 +174,6 @@
         </property>
         <property name="text">
          <string>Export Convex Hull</string>
-        </property>
-       </widget>
-       <widget class="QProgressBar" name="progressBar_7">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>330</y>
-          <width>201</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="value">
-         <number>24</number>
-        </property>
-       </widget>
-       <widget class="QCheckBox" name="checkBox_6">
-        <property name="geometry">
-         <rect>
-          <x>170</x>
-          <y>90</y>
-          <width>181</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Add new layer to the map</string>
         </property>
        </widget>
       </widget>
@@ -368,32 +342,6 @@
          <string>Close</string>
         </property>
        </widget>
-       <widget class="QProgressBar" name="progressBar_8">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>330</y>
-          <width>201</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="value">
-         <number>24</number>
-        </property>
-       </widget>
-       <widget class="QCheckBox" name="checkBox_7">
-        <property name="geometry">
-         <rect>
-          <x>170</x>
-          <y>170</y>
-          <width>181</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Add new layer to the map</string>
-        </property>
-       </widget>
       </widget>
       <widget class="QWidget" name="tab_8">
        <attribute name="title">
@@ -489,19 +437,6 @@
          <bool>false</bool>
         </property>
        </widget>
-       <widget class="QCheckBox" name="checkBox_8">
-        <property name="geometry">
-         <rect>
-          <x>170</x>
-          <y>90</y>
-          <width>181</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Add new layer to the map</string>
-        </property>
-       </widget>
        <widget class="QPushButton" name="generateEarClipping">
         <property name="geometry">
          <rect>
@@ -513,19 +448,6 @@
         </property>
         <property name="text">
          <string>Generate</string>
-        </property>
-       </widget>
-       <widget class="QProgressBar" name="progressBar_9">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>330</y>
-          <width>201</width>
-          <height>23</height>
-         </rect>
-        </property>
-        <property name="value">
-         <number>24</number>
         </property>
        </widget>
        <widget class="QPushButton" name="closeEarClipping">
@@ -561,7 +483,7 @@
        <string>Import Laserdata</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_23">
+     <widget class="QLineEdit" name="LaserDataExportPath">
       <property name="geometry">
        <rect>
         <x>160</x>
@@ -622,7 +544,7 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_24">
+     <widget class="QLineEdit" name="LaserDataImportPath">
       <property name="geometry">
        <rect>
         <x>160</x>
@@ -664,38 +586,12 @@
        <string>Generate</string>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar_10">
-      <property name="geometry">
-       <rect>
-        <x>210</x>
-        <y>330</y>
-        <width>201</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="value">
-       <number>24</number>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="checkBox_9">
-      <property name="geometry">
-       <rect>
-        <x>160</x>
-        <y>130</y>
-        <width>181</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Add new layer to the map</string>
-      </property>
-     </widget>
     </widget>
     <widget class="QWidget" name="tab_10">
      <attribute name="title">
       <string>DTM</string>
      </attribute>
-     <widget class="QLineEdit" name="lineEdit_3">
+     <widget class="QLineEdit" name="DTMImportPath">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -721,7 +617,7 @@
        <string>Import DGM</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_12">
+     <widget class="QLineEdit" name="DTMCellsize">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -828,7 +724,7 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QPushButton" name="Button_26">
+     <widget class="QPushButton" name="DTMExport">
       <property name="geometry">
        <rect>
         <x>550</x>
@@ -844,7 +740,7 @@
        <bool>false</bool>
       </property>
      </widget>
-     <widget class="QLineEdit" name="lineEdit_25">
+     <widget class="QLineEdit" name="DTMExportPath">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -873,33 +769,7 @@
        <string>Export Data</string>
       </property>
      </widget>
-     <widget class="QProgressBar" name="progressBar_11">
-      <property name="geometry">
-       <rect>
-        <x>240</x>
-        <y>370</y>
-        <width>201</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="value">
-       <number>24</number>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="checkBox_10">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>300</y>
-        <width>181</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Add new layer to the map</string>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="comboBox">
+     <widget class="QComboBox" name="CB_DTMInterpolation">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -929,7 +799,7 @@
        </property>
       </item>
      </widget>
-     <widget class="QComboBox" name="comboBox_5">
+     <widget class="QComboBox" name="CB_DTMSmoothing">
       <property name="geometry">
        <rect>
         <x>170</x>
@@ -964,7 +834,7 @@
        </property>
       </item>
      </widget>
-     <widget class="QComboBox" name="comboBox_6">
+     <widget class="QComboBox" name="CB_DTMSurface">
       <property name="geometry">
        <rect>
         <x>170</x>
