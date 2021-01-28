@@ -1056,6 +1056,7 @@ class GisProgrammierungCSFTFF:
 
         #Save file
         np.savetxt(output_file_EarClip, P, delimiter='  ', fmt='%f') #save file
+        # Processing status in QGIS
         self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutEarClip, level=Qgis.Success, duration=3)
 
         #Plot data
@@ -1136,6 +1137,8 @@ class GisProgrammierungCSFTFF:
 
         # Output file
         np.savetxt(filenameOutLaser, laserPolyData, fmt='%s') #save File
+        # Processing status in QGIS
+        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutLaser, level=Qgis.Success, duration=3)
 
         color = np.array([[1, 0.4, 0]] * n) # orange
 
@@ -1149,8 +1152,7 @@ class GisProgrammierungCSFTFF:
         p1.set_data(laserPolyPos, face_color=color, symbol='o', size=1.5, edge_width=0.1, edge_color='blue')
         view.add(p1)
         canvas.app.run()
-        # Processing status in QGIS
-        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutLaser, level=Qgis.Success, duration=3)
+        
 
     def run(self):
         """Run method that performs all the real work"""
