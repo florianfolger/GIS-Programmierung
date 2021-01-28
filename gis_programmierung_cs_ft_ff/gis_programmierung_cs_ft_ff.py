@@ -236,8 +236,17 @@ class GisProgrammierungCSFTFF:
         fig = plt.figure()
         ax = fig.add_subplot(111)  # vgl. https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplot.html (10.12.2018)
         # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.set_ylim.html
-        plt.ylim(-10, 15)
-        plt.xlim(-10, 15)
+
+        # plot axis
+        minAxis = np.amin(P)
+        maxAxis = np.amax(P)
+        if minAxis <= 0:
+            plt.ylim(minAxis - 2, maxAxis + 2)
+            plt.xlim(minAxis - 2, maxAxis + 2)
+        else:
+            plt.ylim(minAxis + 2, maxAxis + 2)
+            plt.xlim(minAxis + 2, maxAxis + 2)
+
         # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html  
         plt.plot(P[:,0],P[:,1], 'b-')  # b = blau
         plt.plot([P[-1,0],P[0,0]],[P[-1,1],P[0,1]], 'b-')
@@ -306,7 +315,6 @@ class GisProgrammierungCSFTFF:
         Not_none_values = filter(None.__ne__, P)
         P = list(Not_none_values)
         P = np.array(P)
-        print(P)
 
         # Save file
         np.savetxt(output_file_PIP, P, delimiter=' ', fmt='%f') #save File
@@ -317,8 +325,17 @@ class GisProgrammierungCSFTFF:
         fig = plt.figure()
         ax = fig.add_subplot(111)  # vgl. https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplot.html (10.12.2018)
         # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.set_ylim.html
-        plt.ylim(-5, 15)
-        plt.xlim(-5, 15)
+
+        # plot axis
+        minAxis = np.amin(pipPoly)
+        maxAxis = np.amax(pipPoly)
+        if minAxis <= 0:
+            plt.ylim(minAxis - 2, maxAxis + 2)
+            plt.xlim(minAxis - 2, maxAxis + 2)
+        else:
+            plt.ylim(minAxis + 2, maxAxis + 2)
+            plt.xlim(minAxis + 2, maxAxis + 2)
+
         # vgl. https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html  
         plt.plot(pipPoly[:,0],pipPoly[:,1], 'b-')  # b = blau
         plt.plot([pipPoly[-1,0],pipPoly[0,0]],[pipPoly[-1,1],pipPoly[0,1]], 'b-')
