@@ -34,8 +34,11 @@ from .resources import *
 from .gis_programmierung_cs_ft_ff_dialog import GisProgrammierungCSFTFFDialog
 import os.path
 
-# Import vispy and numpy
+# Import vispy, laspy and numpy
 import vispy
+from vispy import app, gloo, visuals, scene
+import laspy
+from laspy.file import File
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -239,6 +242,7 @@ class GisProgrammierungCSFTFF:
                 del P[-1]
         P = np.array(P)
         np.savetxt(output_file_convHull, np.array(P), delimiter=' ', fmt='%f') #save File
+        # Processing status in QGIS
         self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutConvHull, level=Qgis.Success, duration=3)
         
         fig = plt.figure()
@@ -318,6 +322,7 @@ class GisProgrammierungCSFTFF:
 
         # Save file
         np.savetxt(output_file_PIP, P, delimiter=' ', fmt='%f') #save File
+        # Processing status in QGIS
         self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutPIP, level=Qgis.Success, duration=3)
     
         # Plot data
@@ -354,6 +359,87 @@ class GisProgrammierungCSFTFF:
     #def execute_ear(self):
         #"""Execute Ear-Clipping-Algorithm"""
 
+    # ------------- Laserpoints  ------------- #
+    def import_laserpoints(self):
+        """Laserponts import function"""
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select file","", '*.las')
+        self.dlg.LaserDataImportPath.setText(filename)
+
+    def export_laserpoints(self):
+        """Laserpoints export function"""
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","", '*.las *.txt')
+        self.dlg.LaserDataExportPath.setText(filename)
+
+    def execute_laserpoints(self):
+        """Main function laserpoints"""
+        filenameInLaserPoly = self.dlg.LaserDataImportPath.text() # Filename Input Points
+        filenameOutLaser = self.dlg.LaserDataExportPath.text() # Filename Output
+
+        # Read file
+        laserPoly = File(filenameInLaserPoly, mode='r')
+
+        # https://stackoverflow.com/questions/44766591/vispy-two-data-sets-on-same-plot-with-colors
+        # build your visuals, that's all
+        Scatter3D = scene.visuals.create_visual_node(visuals.MarkersVisual)
+
+        # Vispy
+        canvas = scene.SceneCanvas(keys='interactive', show=True)
+
+        # Add a ViewBox to let the user zoom/rotate
+        view = canvas.central_widget.add_view()
+        view.camera = 'turntable'
+        view.camera.fov = 45
+        view.camera.distance = 1000000
+
+        # create Points for plot
+        laserPolyPos = [] # empty structure
+        laserPolyPos = [laserPoly.X, laserPoly.Y, laserPoly.Z] # Point coordinates
+        laserPolyPos = np.array(laserPolyPos).T # Transponate into the right form
+
+        laserPolyX = [laserPoly.X] # X
+        laserPolyX = np.array(laserPolyX)
+        laserPolyY = [laserPoly.Y] # Y
+        laserPolyY = np.array(laserPolyY)
+        laserPolyZ = [laserPoly.Z] # Z
+        laserPolyZ = np.array(laserPolyZ)
+
+        laserPolyClass = [laserPoly.Classification] # Classification
+        laserPolyClass = np.array(laserPolyClass)
+
+        laserPolyIntensity = [laserPoly.Intensity] # Intensity
+        laserPolyIntensity = np.array(laserPolyIntensity)
+
+        n = len(laserPoly.X)
+        laserPolyData = np.zeros(n, [('a_x', np.float32, 1),
+                         ('a_y', np.float32, 1),
+                         ('a_z', np.float32, 1),
+                         ('a_classification', np.float32, 1),
+                         ('a_intensity', np.float32, 1)])
+        laserPolyData['a_x'] = laserPolyX
+        laserPolyData['a_y'] = laserPolyY
+        laserPolyData['a_z'] = laserPolyZ
+        laserPolyData['a_classification'] = laserPolyClass
+        laserPolyData['a_intensity'] = laserPolyIntensity
+
+        # Output file
+        np.savetxt(filenameOutLaser, laserPolyData, fmt='%s') #save File
+
+        color = np.array([[1, 0.4, 0]] * n) # orange
+
+        # Set camera center
+        half = int(len(laserPoly.X) / 2)
+        view.camera.center = (laserPolyPos[half,0],laserPolyPos[half,1],laserPolyPos[half,2])
+        
+        # plot ! note the parent parameter
+        p1 = Scatter3D(parent=view.scene)
+        p1.set_gl_state('translucent', blend=True, depth_test=True)
+        p1.set_data(laserPolyPos, face_color=color, symbol='o', size=1.5, edge_width=0.1, edge_color='blue')
+        view.add(p1)
+        canvas.app.run()
+        # Processing status in QGIS
+        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutLaser, level=Qgis.Success, duration=3)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -376,7 +462,12 @@ class GisProgrammierungCSFTFF:
             # ------------- Ear-Clipping-Algorithm ------------- #
             self.dlg.EarClippingImport.clicked.connect(self.import_poly_ear) # Ear-Clipping-Algorithm Import Polygon Button
             self.dlg.EarClippingExport.clicked.connect(self.export_ear) # Ear-Clipping-Algorithm Export Button
-            self.dlg.generateEarClipping.clicked.connect(self.export_ear) # Triggers Ear-Clipping-Algorithm
+            #self.dlg.generateEarClipping.clicked.connect(self.execute_ear) # Triggers Ear-Clipping-Algorithm
+
+            # ------------- Laserpoints ------------- #
+            self.dlg.LaserDataImport.clicked.connect(self.import_laserpoints) # Laserpoints import button
+            self.dlg.LaserDataExport.clicked.connect(self.export_laserpoints) # Laserpoints export button
+            self.dlg.gernateLaserData.clicked.connect(self.execute_laserpoints) # Triggers laserpoints main function
 
             # ------------- Close Button ------------- #
             self.dlg.closeConvexHull.clicked.connect(self.close_function) # close UI
