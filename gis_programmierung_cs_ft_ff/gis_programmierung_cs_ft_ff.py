@@ -275,7 +275,7 @@ class GisProgrammierungCSFTFF:
         
     def import_points_PIP(self):
         """Point in Polygon Import Point-function"""
-        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PointPIPImportPath.setText(filename)
 
     def export_PIP(self):
@@ -286,7 +286,7 @@ class GisProgrammierungCSFTFF:
     def execute_pip(self):
         """Main Point in Polygon function, lesson 2"""
         filenameInPIPPoints = self.dlg.PointPIPImportPath.text() # Filename Input Points
-        filenameInPIPPoly = self.dlg.PolygonPIPImportPath.text() # Filename Input Points
+        filenameInPIPPoly = self.dlg.PolygonPIPImportPath.text() # Filename Input Polygon
         filenameOutPIP = self.dlg.PIPExportPath.text() # Filename Output
 
         output_file_PIP = open(filenameOutPIP, 'w')
