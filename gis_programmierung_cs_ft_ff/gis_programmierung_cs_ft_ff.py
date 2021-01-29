@@ -1097,7 +1097,7 @@ class GisProgrammierungCSFTFF:
 
     # ------------- Laserpoints  ------------- #
     def import_laserpoints(self):
-        """Laserponts import function"""
+        """Laserpoints import function"""
         filename, _filter = QFileDialog.getOpenFileName(
             self.dlg, "Select file","", '*.las')
         self.dlg.LaserDataImportPath.setText(filename)
@@ -1179,130 +1179,52 @@ class GisProgrammierungCSFTFF:
 
     # ------------- Geländemodell  ------------- #
     def import_dtm(self):
-        """Laserponts import function"""
+        """DTM import function"""
         filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.las')
+            self.dlg, "Select file","", '*.txt')
         self.dlg.DTMImportPath.setText(filename)
 
-    def export_dtm(self):
-        """Laserpoints export function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.las *.txt')
-        self.dlg.DTMExportPath.setText(filename)
-
     def execute_dtm(self):
-        """Main function laserpoints"""
-        filenameInDTM = self.dlg.LaserDataImportPath.text() # Filename Input Points
-        filenameOutLaser = self.dlg.LaserDataExportPath.text() # Filename Output
+        """Main function DTM"""
+        filenameInDTM = self.dlg.DTMImportPath.text() # Filename Input DTM
 
         # Read file
-        datafile = File(filenameInDTM, mode='r')
+        with open(filenameInDTM, 'r') as file:
+            dataDTM = np.loadtxt(filenameInDTM)
 
-        def generatePcl(points_array):
-            point_cloud = pcl.PointCloud(points_array)
-            # Transform and create pcd file
-            fil = point_cloud.make_statistical_outlier_filter()
-            fil.set_mean_k(50)
-            fil.set_std_dev_mul_thresh(0.3)
-            
-            fil.set_negative(False)
-            # Inlier
-            pcl.save(fil.filter(), pcdInlierfile)
+        # https://stackoverflow.com/questions/44766591/vispy-two-data-sets-on-same-plot-with-colors
+        # https://stackoverflow.com/questions/62259090/vispy-turntable-camera-roll-option-not-working
+        # build your visuals, that's all
+        Scatter3D = scene.visuals.create_visual_node(visuals.MarkersVisual)
 
-            # Outlier
-            fil.set_negative(True)
-            pcl.save(fil.filter(), pcdOutlierfile)
-            
+        # The real-things : plot using scene
+        # build canvas
+        canvas = scene.SceneCanvas(keys='interactive', show=True)
 
-            return 0
+        # Add a ViewBox to let the user zoom/rotate
+        view = canvas.central_widget.add_view()
+        view.camera = 'turntable'
+        view.camera.fov = 45
+        view.camera.distance = 3000
 
-        # Functions used to read and convert data into float and arrays.
+        # Output file
+        n = len(dataDTM)
+        #np.savetxt(filenameOutDTM, dtmStack, fmt='%s') #save File
+        color = np.array([[1, 0.4, 0]] * n) # orange
 
-        # Read the fuse file line after line
-        def processFile(filename):
-            fullArray = []
-            with open(filename) as f:
-                if (os.path.splitext(filename)[1]) == ".pcd":
-                    for _ in xrange(11):
-                        next(f)
-                
-                if (os.path.splitext(filename)[1]) == ".pcd":    
-                    for line in f:
-                        lat, lon, elev = line.strip().split(" ")
-                        lineArray = [float(lat), float(lon), float(elev)]
-                        fullArray.append(lineArray)
-                    
-                for line in f:
-                    lat, lon, elev, intensity = line.strip().split(" ")
-                    lineArray = [float(lat), float(lon), float(elev)]
-                    fullArray.append(lineArray)    
-                    
-                return fullArray
+        # Set camera center
+        half = int(len(dataDTM) / 2)
+        view.camera.center = (dataDTM[half,0],dataDTM[half,1],dataDTM[half,2])
 
+        # Processing status in QGIS
+        self.iface.messageBar().pushMessage("Success", "Input file read " + filenameInDTM, level=Qgis.Success, duration=3)
 
-        # Select a column from a multidimensional array
-        def column(matrix, i):
-            return [row[i] for row in matrix]
-
-
-        def generatePlot(array, minimum, maximum):
-            x = np.array(column(array, 0))
-            y = np.array(column(array, 1))
-            z = np.array(column(array, 2))
-
-            print("bounding values: %s,%s,%s,%s" %(min(x), min(y), max(x), max(y)))
-
-            colors = define_color(z, minimum, maximum)
-
-            fig = figure(plot_width = plot_width, plot_height = plot_height)
-            fig.scatter(x, y, fill_alpha=0.6, color=colors, line_color=None)
-            
-            return fig
-
-
-        def renderPlot(s1, s2, s3):
-            p = gridplot(([[s1, s2, s3]]))
-            output_file("\\DTM_Scatter.html", title="Digital Terrain Model")
-            print("Opening Browser")
-            show(p)  # open a browser
-            return 0
-
-
-        def define_color(z, minimum, maximum):
-            colors = []
-
-            h = (0.8 - (i - minimum) * 0.8 / (maximum - minimum) for i in z)
-            i = 0
-            for j in h:
-                c = colorsys.hsv_to_rgb(j, 1, 1)
-                c_rgb = "#%02x%02x%02x" % (c[0] * 255, c[1] * 255, c[2] * 255)
-                colors.append(c_rgb)
-                i += 1
-            return colors
-
-
-        def main():
-
-            array = processFile(datafile)   # Read data file
-            
-            # Set variables minimum and maximum to keep the same color scale.
-            minimum = min(np.array(column(array, 2)))
-            maximum = max(np.array(column(array, 2)))                       
-                               
-            s1 = generatePlot(array, minimum, maximum)
-
-            generatePcl(array)              # Generate pcl file
-            
-            pclOutarray = processFile(pcdOutlierfile) # Read outlier pcl file
-            s2 = generatePlot(pclOutarray, minimum, maximum)
-            
-            pclInarray = processFile(pcdInlierfile) # Read inlier pcl file
-            s3 = generatePlot(pclInarray, minimum, maximum)
-            
-            renderPlot(s1, s2, s3)
-
-        if __name__ == '__main__':
-            main()
+        # plot ! note the parent parameter
+        p1 = Scatter3D(parent=view.scene)
+        p1.set_gl_state('translucent', blend=True, depth_test=True)
+        p1.set_data(np.array(dataDTM), face_color=color, symbol='o', size=1.5, edge_width=0.1, edge_color='orange')
+        view.add(p1)
+        canvas.app.run()
             
             
     # ------------- DB Performance  ------------- #
@@ -1439,7 +1361,6 @@ class GisProgrammierungCSFTFF:
 
             # ------------- DTM ------------- #
             self.dlg.DTMImport.clicked.connect(self.import_dtm) # DTM import button
-            self.dlg.DTMExport.clicked.connect(self.export_dtm) # DTM export button
             self.dlg.generateDTM.clicked.connect(self.execute_dtm) # Triggers DTM main function
             
             # ------------- DB Performance ------------- #
