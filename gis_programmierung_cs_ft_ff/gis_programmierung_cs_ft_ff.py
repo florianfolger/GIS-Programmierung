@@ -32,10 +32,11 @@ from .resources import *
 # Import the code for the dialog
 from .gis_programmierung_cs_ft_ff_dialog import GisProgrammierungCSFTFFDialog
 import os.path
-# Initalize for Ear-Clipping
+# Import for Ear-Clipping
+import sys
 import math
 
-# Import vispy, laspy, ZODB, SQLite3 and numpy
+# Import vispy, laspy and numpy
 import vispy
 from vispy import app, gloo, visuals, scene
 import laspy
@@ -50,7 +51,6 @@ from datetime import datetime
 from timeit import default_timer as timer
 import sqlite3
 import numpy as np
-
 
 class GisProgrammierungCSFTFF:
     """QGIS Plugin Implementation."""
@@ -191,14 +191,12 @@ class GisProgrammierungCSFTFF:
     # ------------- Convex Hull ------------- #
     def import_points_convexHull(self):
         """Convex Hull Import function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.shp *.txt *.csv *.ply')
         self.dlg.ConvexHullImportPath.setText(filename) 
     
     def export_points_convexHull(self):
         """Convex Hull Export function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
         self.dlg.ConvexHullExportPath.setText(filename)
 
     def execute_convexHull(self):
@@ -272,20 +270,17 @@ class GisProgrammierungCSFTFF:
     # ------------- Point in Polygon ------------- #
     def import_polygon_PIP(self):
         """Point in Polygon Import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PolygonPIPImportPath.setText(filename)
         
     def import_points_PIP(self):
         """Point in Polygon Import Point-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.csv *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PointPIPImportPath.setText(filename)
 
     def export_PIP(self):
         """Point in Poly Export function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PIPExportPath.setText(filename)
     
     def execute_pip(self):
@@ -359,14 +354,12 @@ class GisProgrammierungCSFTFF:
     # ------------- Ear-Clipping-Algorithm  ------------- #
     def import_poly_ear(self):
         """Ear-Clipping-Algorithm import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName(
-            self.dlg, "Select file","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
         self.dlg.PolygonECAImportPath.setText(filename)
 
     def export_ear(self):
         """Ear-Clipping-Algorithm export Polygon-function"""
-        filename, _filter = QFileDialog.getSaveFileName(
-            self.dlg, "Select output file ","", '*.ply *.txt')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*.ply *.txt')
         self.dlg.EarClippingExportPath.setText(filename)
 
     def execute_ear(self):
@@ -1088,8 +1081,14 @@ class GisProgrammierungCSFTFF:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        plt.ylim(-5, 15)
-        plt.xlim(-5, 15)
+        minAxis = np.amin(ECAI)
+        maxAxis = np.amax(ECAI)
+        if minAxis <= 0:
+            plt.ylim(minAxis - 2, maxAxis + 2)
+            plt.xlim(minAxis - 2, maxAxis + 2)
+        else:
+            plt.ylim(minAxis + 2, maxAxis + 2)
+            plt.xlim(minAxis + 2, maxAxis + 2)
 
         plt.plot(ECAI)
         plt.axis('on')
@@ -1178,6 +1177,134 @@ class GisProgrammierungCSFTFF:
         view.add(p1)
         canvas.app.run()
 
+    # ------------- Geländemodell  ------------- #
+    def import_dtm(self):
+        """Laserponts import function"""
+        filename, _filter = QFileDialog.getOpenFileName(
+            self.dlg, "Select file","", '*.las')
+        self.dlg.DTMImportPath.setText(filename)
+
+    def export_dtm(self):
+        """Laserpoints export function"""
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","", '*.las *.txt')
+        self.dlg.DTMExportPath.setText(filename)
+
+    def execute_dtm(self):
+        """Main function laserpoints"""
+        filenameInDTM = self.dlg.LaserDataImportPath.text() # Filename Input Points
+        filenameOutLaser = self.dlg.LaserDataExportPath.text() # Filename Output
+
+        # Read file
+        datafile = File(filenameInDTM, mode='r')
+
+        def generatePcl(points_array):
+            point_cloud = pcl.PointCloud(points_array)
+            # Transform and create pcd file
+            fil = point_cloud.make_statistical_outlier_filter()
+            fil.set_mean_k(50)
+            fil.set_std_dev_mul_thresh(0.3)
+            
+            fil.set_negative(False)
+            # Inlier
+            pcl.save(fil.filter(), pcdInlierfile)
+
+            # Outlier
+            fil.set_negative(True)
+            pcl.save(fil.filter(), pcdOutlierfile)
+            
+
+            return 0
+
+        # Functions used to read and convert data into float and arrays.
+
+        # Read the fuse file line after line
+        def processFile(filename):
+            fullArray = []
+            with open(filename) as f:
+                if (os.path.splitext(filename)[1]) == ".pcd":
+                    for _ in xrange(11):
+                        next(f)
+                
+                if (os.path.splitext(filename)[1]) == ".pcd":    
+                    for line in f:
+                        lat, lon, elev = line.strip().split(" ")
+                        lineArray = [float(lat), float(lon), float(elev)]
+                        fullArray.append(lineArray)
+                    
+                for line in f:
+                    lat, lon, elev, intensity = line.strip().split(" ")
+                    lineArray = [float(lat), float(lon), float(elev)]
+                    fullArray.append(lineArray)    
+                    
+                return fullArray
+
+
+        # Select a column from a multidimensional array
+        def column(matrix, i):
+            return [row[i] for row in matrix]
+
+
+        def generatePlot(array, minimum, maximum):
+            x = np.array(column(array, 0))
+            y = np.array(column(array, 1))
+            z = np.array(column(array, 2))
+
+            print("bounding values: %s,%s,%s,%s" %(min(x), min(y), max(x), max(y)))
+
+            colors = define_color(z, minimum, maximum)
+
+            fig = figure(plot_width = plot_width, plot_height = plot_height)
+            fig.scatter(x, y, fill_alpha=0.6, color=colors, line_color=None)
+            
+            return fig
+
+
+        def renderPlot(s1, s2, s3):
+            p = gridplot(([[s1, s2, s3]]))
+            output_file("\\DTM_Scatter.html", title="Digital Terrain Model")
+            print("Opening Browser")
+            show(p)  # open a browser
+            return 0
+
+
+        def define_color(z, minimum, maximum):
+            colors = []
+
+            h = (0.8 - (i - minimum) * 0.8 / (maximum - minimum) for i in z)
+            i = 0
+            for j in h:
+                c = colorsys.hsv_to_rgb(j, 1, 1)
+                c_rgb = "#%02x%02x%02x" % (c[0] * 255, c[1] * 255, c[2] * 255)
+                colors.append(c_rgb)
+                i += 1
+            return colors
+
+
+        def main():
+
+            array = processFile(datafile)   # Read data file
+            
+            # Set variables minimum and maximum to keep the same color scale.
+            minimum = min(np.array(column(array, 2)))
+            maximum = max(np.array(column(array, 2)))                       
+                               
+            s1 = generatePlot(array, minimum, maximum)
+
+            generatePcl(array)              # Generate pcl file
+            
+            pclOutarray = processFile(pcdOutlierfile) # Read outlier pcl file
+            s2 = generatePlot(pclOutarray, minimum, maximum)
+            
+            pclInarray = processFile(pcdInlierfile) # Read inlier pcl file
+            s3 = generatePlot(pclInarray, minimum, maximum)
+            
+            renderPlot(s1, s2, s3)
+
+        if __name__ == '__main__':
+            main()
+            
+            
     # ------------- DB Performance  ------------- #
     def export_ZODB(self):
         """ZODB export function"""
@@ -1281,6 +1408,7 @@ class GisProgrammierungCSFTFF:
         # Processing status in QGIS
         self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutOODB, level=Qgis.Success, duration=3)
 
+
     def run(self):
         """Run method that performs all the real work"""
         # Create the dialog with elements (after translation) and keep reference
@@ -1309,6 +1437,11 @@ class GisProgrammierungCSFTFF:
             self.dlg.LaserDataExport.clicked.connect(self.export_laserpoints) # Laserpoints export button
             self.dlg.gernateLaserData.clicked.connect(self.execute_laserpoints) # Triggers laserpoints main function
 
+            # ------------- DTM ------------- #
+            self.dlg.DTMImport.clicked.connect(self.import_dtm) # DTM import button
+            self.dlg.DTMExport.clicked.connect(self.export_dtm) # DTM export button
+            self.dlg.generateDTM.clicked.connect(self.execute_dtm) # Triggers DTM main function
+            
             # ------------- DB Performance ------------- #
             self.dlg.ExportZODB.clicked.connect(self.export_ZODB) # ZODB export button
             self.dlg.ExportSQLite3.clicked.connect(self.export_SQLite3) # OODB export button
@@ -1321,7 +1454,6 @@ class GisProgrammierungCSFTFF:
             self.dlg.closeEarClipping.clicked.connect(self.close_function) # close UI
             self.dlg.closeLaserData.clicked.connect(self.close_function) # close UI
             self.dlg.closeDTM.clicked.connect(self.close_function) # close UI
-            self.dlg.closeDBPerformance.clicked.connect(self.close_function) # close UI
 
         # show the dialog
         self.dlg.show()
@@ -1331,4 +1463,3 @@ class GisProgrammierungCSFTFF:
         if result:
             
             pass
-        
