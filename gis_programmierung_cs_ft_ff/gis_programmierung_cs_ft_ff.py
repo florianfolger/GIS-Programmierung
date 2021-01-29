@@ -190,12 +190,12 @@ class GisProgrammierungCSFTFF:
     # ------------- Convex Hull ------------- #
     def import_points_convexHull(self):
         """Convex Hull Import function"""
-        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.shp *.txt *.csv *.ply')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '.txt *.csv')
         self.dlg.ConvexHullImportPath.setText(filename) 
     
     def export_points_convexHull(self):
         """Convex Hull Export function"""
-        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*.txt *.csv')
         self.dlg.ConvexHullExportPath.setText(filename)
 
     def execute_convexHull(self):
@@ -269,17 +269,17 @@ class GisProgrammierungCSFTFF:
     # ------------- Point in Polygon ------------- #
     def import_polygon_PIP(self):
         """Point in Polygon Import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.txt *.ply')
         self.dlg.PolygonPIPImportPath.setText(filename)
         
     def import_points_PIP(self):
         """Point in Polygon Import Point-function"""
-        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.txt *.ply')
         self.dlg.PointPIPImportPath.setText(filename)
 
     def export_PIP(self):
         """Point in Poly Export function"""
-        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getSaveFileName( self.dlg, 'Select output file ','', '*.txt *.ply')
         self.dlg.PIPExportPath.setText(filename)
     
     def execute_pip(self):
@@ -399,8 +399,8 @@ class GisProgrammierungCSFTFF:
             plt.ylim(minAxis - 2, maxAxis + 2)
             plt.xlim(minAxis - 2, maxAxis + 2)
         else:
-            plt.ylim(minAxis, maxAxis)
-            plt.xlim(minAxis, maxAxis)
+            plt.ylim(minAxis + 2, maxAxis + 2)
+            plt.xlim(minAxis + 2, maxAxis + 2)
 
         plt.triplot(ECAI[:,0], ECAI[:,1], tri.simplices)
         plt.plot(ECAI[:,0], ECAI[:,1], 'rx')
@@ -691,6 +691,7 @@ class GisProgrammierungCSFTFF:
             self.dlg.closeEarClipping.clicked.connect(self.close_function) # close UI
             self.dlg.closeLaserData.clicked.connect(self.close_function) # close UI
             self.dlg.closeDTM.clicked.connect(self.close_function) # close UI
+            self.dlg.closeDBPerformance.clicked.connect(self.close_function) # close UI
 
         # show the dialog
         self.dlg.show()
