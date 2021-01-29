@@ -353,7 +353,7 @@ class GisProgrammierungCSFTFF:
     # ------------- Ear-Clipping-Algorithm  ------------- #
     def import_poly_ear(self):
         """Ear-Clipping-Algorithm import Polygon-function"""
-        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*shp *.csv *.txt *.ply')
+        filename, _filter = QFileDialog.getOpenFileName( self.dlg, 'Select input file ','', '*.csv *.txt *.ply')
         self.dlg.PolygonECAImportPath.setText(filename)
 
     def export_ear(self):
