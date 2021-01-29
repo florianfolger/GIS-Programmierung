@@ -38,7 +38,7 @@ import math
 
 # Import vispy, laspy and numpy
 import vispy
-from vispy import app, gloo, visuals, scene
+#from vispy import app, gloo, visuals, scene
 import laspy
 from laspy.file import File
 import numpy as np
@@ -1073,8 +1073,8 @@ class GisProgrammierungCSFTFF:
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        minAxis = np.amin(pipPoly)
-        maxAxis = np.amax(pipPoly)
+        minAxis = np.amin(ECAI)
+        maxAxis = np.amax(ECAI)
         if minAxis <= 0:
             plt.ylim(minAxis - 2, maxAxis + 2)
             plt.xlim(minAxis - 2, maxAxis + 2)
