@@ -33,16 +33,24 @@ from .resources import *
 from .gis_programmierung_cs_ft_ff_dialog import GisProgrammierungCSFTFFDialog
 import os.path
 # Initalize for Ear-Clipping
-import sys
 import math
 
-# Import vispy, laspy and numpy
+# Import vispy, laspy, ZODB, SQLite3 and numpy
 import vispy
 from vispy import app, gloo, visuals, scene
 import laspy
 from laspy.file import File
-import numpy as np
 import matplotlib.pyplot as plt
+import persistent
+import transaction
+import ZODB 
+from ZODB import FileStorage, DB
+import time
+from datetime import datetime
+from timeit import default_timer as timer
+import sqlite3
+import numpy as np
+
 
 class GisProgrammierungCSFTFF:
     """QGIS Plugin Implementation."""
@@ -1169,7 +1177,109 @@ class GisProgrammierungCSFTFF:
         p1.set_data(laserPolyPos, face_color=color, symbol='o', size=1.5, edge_width=0.1, edge_color='blue')
         view.add(p1)
         canvas.app.run()
+
+    # ------------- DB Performance  ------------- #
+    def export_ZODB(self):
+        """ZODB export function"""
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","", '*.fs')
+        self.dlg.ExportPathZODB.setText(filename)
+
+    def export_SQLite3(self):
+        """OODB export function"""
+        filename, _filter = QFileDialog.getSaveFileName(
+            self.dlg, "Select output file ","", '*.gpgk')
+        self.dlg.ExportPathSQLite3.setText(filename)
+
+    def execute_ZODB(self):
+        """ main function object database ZODB"""
+        filenameOutZODB = self.dlg.ExportPathZODB.text() # Filename Output
+        storage = FileStorage.FileStorage(filenameOutZODB)
+        db = DB(storage)
+    
+        # generate geopoints
+        n = int(self.dlg.NumberOfGeoobjects.text())
+        nStr = self.dlg.NumberOfGeoobjects.text()
+        zodbPoints = np.random.rand(n, 2) * 100
+
+        # open connection, start timer
+        connection = db.open()
+        root = connection.root()
         
+        # start timer
+        startTimer = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
+        start = timer()
+        fullstart = start
+    
+        root['points'] = []
+        dbPoints = root['points']
+        for i in range(len(zodbPoints)):
+            dbPoints.append((zodbPoints[i,0], zodbPoints[i,1]))
+        root['points'] = dbPoints
+        transaction.commit()
+
+        # datestring with timestamp
+        endTimer = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
+        # end timer
+        end = timer()
+        # print time
+        self.dlg.ZODBPerfOutput.setText("Total time : %.1f ms" % (1000 * (end - fullstart)) + "\n\r")
+        self.dlg.ZODBPerfOutput.setText("Geoobjects used: " + nStr + "\n\r" +
+                                        "Start time: " + startTimer + "\n\r" +
+                                        "End time: " + endTimer + "\n\r" +
+                                        "Total time : %.1f ms" % (1000 * (end - fullstart)) + "\n\r")
+
+        # Processing status in QGIS
+        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutZODB, level=Qgis.Success, duration=3)
+        
+        connection.close()
+
+    def execute_SQLite3(self):
+        """ main function object database ZODB"""
+        # create new db file
+        filenameOutOODB = self.dlg.ExportPathSQLite3.text() # Filename Output
+        verbindungsaufbau = sqlite3.connect(filenameOutOODB)
+        dbzugriff = verbindungsaufbau.cursor()
+
+        # create table points
+        dbzugriff.execute("CREATE TABLE IF NOT EXISTS 'points' ( \
+            x REAL, \
+            y REAL)"
+        )
+
+        # generate geopoints
+        n = int(self.dlg.NumberOfGeoobjects.text())
+        nStr = self.dlg.NumberOfGeoobjects.text()
+        oodbPoints = np.random.rand(n, 2) * 100
+    
+        # start timer
+        startTimer = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
+        start = timer()
+        fullstart = start
+
+        for i in range(n):
+            dbzugriff.execute("INSERT INTO 'points' ('x', 'y') VALUES(?, ?)", (oodbPoints[i,0], oodbPoints[i,1]))
+            verbindungsaufbau.commit()
+    
+        # datestring with timestamp
+        endTimer = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        
+
+        # end timer
+        end = timer()
+        # print time
+        self.dlg.SQLite3PerfOutput.setText("Geoobjects used: " + nStr + "\n\r" +
+                                        "Start time: " + startTimer + "\n\r" +
+                                        "End time: " + endTimer + "\n\r" +
+                                        "Total time : %.1f ms" % (1000 * (end - fullstart)) + "\n\r")
+
+        dbzugriff.close()
+
+        # Processing status in QGIS
+        self.iface.messageBar().pushMessage("Success", "Output file written at " + filenameOutOODB, level=Qgis.Success, duration=3)
 
     def run(self):
         """Run method that performs all the real work"""
@@ -1199,12 +1309,19 @@ class GisProgrammierungCSFTFF:
             self.dlg.LaserDataExport.clicked.connect(self.export_laserpoints) # Laserpoints export button
             self.dlg.gernateLaserData.clicked.connect(self.execute_laserpoints) # Triggers laserpoints main function
 
+            # ------------- DB Performance ------------- #
+            self.dlg.ExportZODB.clicked.connect(self.export_ZODB) # ZODB export button
+            self.dlg.ExportSQLite3.clicked.connect(self.export_SQLite3) # OODB export button
+            self.dlg.gernateDBPerformanceZODB.clicked.connect(self.execute_ZODB) # Triggers ZODB main function
+            self.dlg.generateDBPerformanceSQLite3.clicked.connect(self.execute_SQLite3) # Triggers SQLite3 main function
+
             # ------------- Close Button ------------- #
             self.dlg.closeConvexHull.clicked.connect(self.close_function) # close UI
             self.dlg.closePIP.clicked.connect(self.close_function) # close UI
             self.dlg.closeEarClipping.clicked.connect(self.close_function) # close UI
             self.dlg.closeLaserData.clicked.connect(self.close_function) # close UI
             self.dlg.closeDTM.clicked.connect(self.close_function) # close UI
+            self.dlg.closeDBPerformance.clicked.connect(self.close_function) # close UI
 
         # show the dialog
         self.dlg.show()
@@ -1214,3 +1331,4 @@ class GisProgrammierungCSFTFF:
         if result:
             
             pass
+        
